@@ -1,6 +1,6 @@
 #!/bin/bash
 #########################################################
-# Function :Set proxy and start meow                    #
+# Function :Control proxy and meow                      #
 # Platform :All Linux Based Platform                    #
 # Version  :1.0                                         #
 # Date     :2021-04-15                                  #
@@ -27,11 +27,10 @@
 # exit会导致退出shell，导致作用于当前shell的cliproxy失效，                                            #
 # 运行方式——source ~/MEOW.sh -cli。                                                               #
 # 2021-05-07更新：                                                                               #
-# 放弃用V2rayU作为主力，由于qv2ray也仍无M1版本，只好转回ShadowsocksX-NG，                              #
+# 放弃用V2rayU作为主力，由于qv2ray也仍无M1版本，只好转回ShadowsocksX-NG(New Generation)，              #
 # 但坚守用原生browser的底线——Safari，                                                              #
 # 所以稍微改变本代码逻辑，功能跟原先基本一致，但可以选择v2ray或shadowsocks，并增加代码补全，                #
-# 与原先不同的是选择v2ray后会检查并关闭shadowsocks，选择shadowsocks之后会检查并关闭v2ray，               #
-# 另外，由于shadowsocks只支持socks5协议，相比v2ray会砍掉http协议的代理。                               #
+# 与原先不同的是选择v2ray后会检查并关闭shadowsocks，选择shadowsocks之后会检查并关闭v2ray。               #
 #################################################################################################
 
 kill_processes(){
