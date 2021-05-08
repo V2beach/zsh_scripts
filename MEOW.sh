@@ -42,77 +42,154 @@ kill_processes(){
     done
 }
 
-if [[ "$1" == "-startup" ]]
+if [[ "$1" == "-v2ray" ]]
 then
-    # start meow
-    # grep -v grep是去除当前grep MEOW的进程本身，$?是上条命令的返回值，如果是0说明没有搜到
-    ps -ef | grep MEOW | grep -v grep | grep -v MEOW.sh
-    if [ $? -ne 0 ]
+    if [[ "$2" == "startup" ]]
     then
-        nohup /Users/v2beach/go/bin/MEOW > /Users/v2beach/LOG/MEOW.log 2>&1 &
-    fi
+        # stop the other
+        kill_processes Shadowsocks
     
-    # start V2ray
-    ps -ef | grep v2ray | grep -v grep | grep -v MEOW.sh
-    if [ $? -ne 0 ]
+        # start meow
+        # grep -v grep是去除当前grep MEOW的进程本身，$?是上条命令的返回值，如果是0说明没有搜到
+        ps -ef | grep MEOW | grep -v grep | grep -v MEOW.sh
+        if [ $? -ne 0 ]
+        then
+            nohup /Users/v2beach/go/bin/MEOW > /Users/v2beach/LOG/MEOW.log 2>&1 &
+        fi
+        
+        # start V2ray
+        ps -ef | grep v2ray | grep -v grep | grep -v MEOW.sh
+        if [ $? -ne 0 ]
+        then
+            nohup /Users/v2beach/v2ray-macos-arm64-v8a/v2ray > /Users/v2beach/LOG/V2ray.log 2>&1 &
+            networksetup -setwebproxy Wi-Fi 127.0.0.1 8001
+            networksetup -setsecurewebproxy Wi-Fi 127.0.0.1 8001
+            networksetup -setsocksfirewallproxy Wi-Fi 127.0.0.1 1081
+        fi
+
+        # set gui proxy
+        # while true
+        # do
+            # proxy=`networksetup -getwebproxy Wi-Fi | grep ^Enabled`
+            # if [[ $proxy == "Enabled: Yes" ]]
+            # then
+        networksetup -setautoproxyurl Wi-Fi http://127.0.0.1:7777/pac
+                # break
+            # fi
+        # done
+
+        echo "startup done"
+    elif [[ "$2" == "shutdown" ]]
     then
-        nohup /Users/v2beach/v2ray-macos-arm64-v8a/v2ray > /Users/v2beach/LOG/V2ray.log 2>&1 &
-        networksetup -setwebproxy Wi-Fi 127.0.0.1 8001
-        networksetup -setsecurewebproxy Wi-Fi 127.0.0.1 8001
-        networksetup -setsocksfirewallproxy Wi-Fi 127.0.0.1 1081
+        # launchctl remove yanue.v2rayu.v2ray-core
+        kill_processes MEOW
+        kill_processes v2ray
+        networksetup -setautoproxystate Wi-Fi off
+        networksetup -setwebproxystate Wi-Fi off
+        networksetup -setsecurewebproxystate Wi-Fi off
+        networksetup -setsocksfirewallproxystate Wi-Fi off
+
+        echo "shutdown done"
+    elif [[ "$2" == "fucow" ]]
+    then
+        kill_processes MEOW
+        networksetup -setautoproxystate Wi-Fi off
+
+        echo "autoproxy off"
+    elif [[ "$2" == "cli" ]]
+    then
+        export all_proxy=socks5://127.0.0.1:1081
+        export http_proxy=http://127.0.0.1:8001
+        export https_proxy=http://127.0.0.1:8001
+
+        echo "cliproxy on"
+
+        return
+    else
+        echo "unknown option: "$2""
+        echo "    usage: ~/MEOW.sh [-v2ray <command>] [-shadowsocks <command>] [-help]"
     fi
 
-    # set gui proxy
-    # while true
-    # do
-        # proxy=`networksetup -getwebproxy Wi-Fi | grep ^Enabled`
-        # if [[ $proxy == "Enabled: Yes" ]]
-        # then
-    networksetup -setautoproxyurl Wi-Fi http://127.0.0.1:7777/pac
-            # break
-        # fi
-    # done
-
-    echo "startup done"
-elif [[ "$1" == "-shutdown" ]]
+elif [[ "$1" == "-shadowsocks" ]]
 then
-    # launchctl remove yanue.v2rayu.v2ray-core
-    kill_processes MEOW
-    kill_processes v2ray
-    networksetup -setautoproxystate Wi-Fi off
-    networksetup -setwebproxystate Wi-Fi off
-    networksetup -setsecurewebproxystate Wi-Fi off
-    networksetup -setsocksfirewallproxystate Wi-Fi off
+    if [[ "$2" == "startup" ]]
+    then
+        # stop the other
+        kill_processes v2ray
+    
+        # start meow
+        # grep -v grep是去除当前grep MEOW的进程本身，$?是上条命令的返回值，如果是0说明没有搜到
+        ps -ef | grep MEOW | grep -v grep | grep -v MEOW.sh
+        if [ $? -ne 0 ]
+        then
+            nohup /Users/v2beach/go/bin/MEOW > /Users/v2beach/LOG/MEOW.log 2>&1 &
+        fi
+        
+        # start V2ray
+        ps -ef | grep Shadowsocks | grep -v grep | grep -v MEOW.sh
+        if [ $? -ne 0 ]
+        then
+            nohup /Applications/ShadowsocksX-NG.app/Contents/MacOS/ShadowsocksX-NG > /Users/v2beach/LOG/ShadowsocksX.log 2>&1 &
+            networksetup -setwebproxy Wi-Fi 127.0.0.1 8001
+            networksetup -setsecurewebproxy Wi-Fi 127.0.0.1 8001
+            networksetup -setsocksfirewallproxy Wi-Fi 127.0.0.1 1081
+        fi
 
-    echo "shutdown done"
-elif [[ "$1" == "-fucow" ]]
-then
-    kill_processes MEOW
-    networksetup -setautoproxystate Wi-Fi off
+        # set gui proxy
+        # while true
+        # do
+            # proxy=`networksetup -getwebproxy Wi-Fi | grep ^Enabled`
+            # if [[ $proxy == "Enabled: Yes" ]]
+            # then
+        networksetup -setautoproxyurl Wi-Fi http://127.0.0.1:7777/pac
+                # break
+            # fi
+        # done
 
-    echo "autoproxy off"
-elif [[ "$1" == "-cli" ]]
-then
-    export all_proxy=socks5://127.0.0.1:1081
-    export http_proxy=http://127.0.0.1:8001
-    export https_proxy=http://127.0.0.1:8001
+        echo "startup done"
+    elif [[ "$2" == "shutdown" ]]
+    then
+        # launchctl remove yanue.v2rayu.v2ray-core
+        kill_processes MEOW
+        kill_processes Shadowsocks
+        networksetup -setautoproxystate Wi-Fi off
+        networksetup -setwebproxystate Wi-Fi off
+        networksetup -setsecurewebproxystate Wi-Fi off
+        networksetup -setsocksfirewallproxystate Wi-Fi off
 
-    echo "cliproxy on"
+        echo "shutdown done"
+    elif [[ "$2" == "fucow" ]]
+    then
+        kill_processes MEOW
+        networksetup -setautoproxystate Wi-Fi off
 
-    return
+        echo "autoproxy off"
+    elif [[ "$2" == "cli" ]]
+    then
+        export all_proxy=socks5://127.0.0.1:1081
+        export http_proxy=http://127.0.0.1:8001
+        export https_proxy=http://127.0.0.1:8001
+
+        echo "cliproxy on"
+
+        return
+    else
+        echo "unknown option: "$2""
+        echo "    usage: ~/MEOW.sh [-v2ray <command>] [-shadowsocks <command>] [-help]"
+    fi
+
 elif [[ "$1" == "-help" ]]
 then
-    echo "start fuck up  (get a fuck by executing this command, literally)"
-    echo "    startup     start MEOW, start V2ray, proxy  on"
-    echo "shut fuck down (escape from fuck by executing this command, fortunately)"
-    echo "    shutdown    stop  MEOW, stop  V2ray, proxy off"
-    echo "fuck cow/meow  (fuck the cow to make it meow, cruelly, in a sense)"
-    echo "    fucow       stop  MEOW, automatic proxy    off"
-    echo "CLI fuck GFW.  (let Command-Line Interface fuck Great Fire Wall)"
-    echo "    cli         set cli proxy to socks5://localhost:port"
+    echo "usage: ~/MEOW.sh [-v2ray <command>] [-shadowsocks <command>] [-help]"
+    echo "commands after arg1:"
+    echo "    startup     start MEOW, start service, proxy  on (stop the other)"
+    echo "    shutdown    stop  MEOW, stop  service, proxy off"
+    echo "    fucow       stop  MEOW, proxy automatic configuration off"
+    echo "    cli         set cli proxy to protocol://localhost:port"
+
 else
     echo "unknown option: "$1""
-    echo "    usage: ~/MEOW.sh [-startup] [-shutdown] [-fucow] [-cli] [-help]"
+    echo "    usage: ~/MEOW.sh [-v2ray <command>] [-shadowsocks <command>] [-help]"
 fi
 
 exit
