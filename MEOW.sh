@@ -31,6 +31,7 @@
 # 但坚守用原生browser的底线——Safari，                                                              #
 # 所以稍微改变本代码逻辑，功能跟原先基本一致，但可以选择v2ray或shadowsocks，并增加代码补全，                #
 # 与原先不同的是选择v2ray后会检查并关闭shadowsocks，选择shadowsocks之后会检查并关闭v2ray。               #
+# 由于直接使用v2ray-core，没有V2rayU启动的延迟，setautoproxyurl也不再需要等待其他代理打开后再接管全局了。   #
 #################################################################################################
 
 kill_processes(){
@@ -51,34 +52,33 @@ then
         nohup /Users/v2beach/go/bin/MEOW > /Users/v2beach/LOG/MEOW.log 2>&1 &
     fi
     
-    # start V2rayU
-    ps -ef | grep V2rayU | grep -v grep | grep -v v2ray-core | grep -v MEOW.sh
+    # start V2ray
+    ps -ef | grep v2ray | grep -v grep | grep -v MEOW.sh
     if [ $? -ne 0 ]
     then
-    nohup /Applications/V2rayU.app/Contents/MacOS/V2rayU > /Users/v2beach/LOG/V2rayU.log 2>&1 &
+        nohup /Users/v2beach/v2ray-macos-arm64-v8a/v2ray > /Users/v2beach/LOG/V2ray.log 2>&1 &
+        networksetup -setwebproxy Wi-Fi 127.0.0.1 8001
+        networksetup -setsecurewebproxy Wi-Fi 127.0.0.1 8001
+        networksetup -setsocksfirewallproxy Wi-Fi 127.0.0.1 1081
     fi
 
     # set gui proxy
-    while true
-    do
-        proxy=`networksetup -getwebproxy Wi-Fi | grep ^Enabled`
-        if [[ $proxy == "Enabled: Yes" ]]
-        then
-            networksetup -setautoproxyurl Wi-Fi http://127.0.0.1:7777/pac
-            break
-        fi
-    done
-    
-    # set cli proxy
-    # export http_proxy="http://127.0.0.1:8001"
-    # export all_proxy="socks://127.0.0.1:1081"
+    # while true
+    # do
+        # proxy=`networksetup -getwebproxy Wi-Fi | grep ^Enabled`
+        # if [[ $proxy == "Enabled: Yes" ]]
+        # then
+    networksetup -setautoproxyurl Wi-Fi http://127.0.0.1:7777/pac
+            # break
+        # fi
+    # done
 
     echo "startup done"
 elif [[ "$1" == "-shutdown" ]]
 then
-    launchctl remove yanue.v2rayu.v2ray-core
+    # launchctl remove yanue.v2rayu.v2ray-core
     kill_processes MEOW
-    kill_processes V2rayU
+    kill_processes v2ray
     networksetup -setautoproxystate Wi-Fi off
     networksetup -setwebproxystate Wi-Fi off
     networksetup -setsecurewebproxystate Wi-Fi off
