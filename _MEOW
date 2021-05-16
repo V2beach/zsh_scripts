@@ -1,0 +1,55 @@
+#compdef _MEOW MEOW.sh
+
+# mkdir ~/.fpath
+# add fpath=($HOME/.fpath $fpath) to ~/.zshrc
+# save _MEOW in $fpath
+
+# 2021-05-15 version1
+function _MEOW {
+    local what
+    # -arg[description]:message:action
+    _arguments -C \
+	'-shadowsocks::' \
+	'-v2ray::' \
+#	'1::(-shadowsocks -v2ray)' \
+#	'*:file:_files' \
+#	'*::arg:->args'
+
+    case $what[1] in
+        -shadowsocks)
+            _MEOW_shadowsocks
+        ;;
+        -v2ray)
+            _MEOW_v2ray
+        ;;
+    esac
+
+    if [[ ${words[(i)-shadowsocks]} -le ${#words} ]]
+    then
+	_values 'shadowsocks options' \
+	    'startup' \
+            'shutdown'
+    fi
+    if [[ ${words[(i)-v2ray]} -le ${#words} ]]
+    then
+	_values 'v2ray options' \
+	    'startup' \
+	    'shutdown'
+    fi
+}
+
+function _MEOW_shadowsocks {
+    _arguments -C\
+        'startup::' \
+        'shutdown::'
+}
+
+function _MEOW_v2ray {
+    _arguments -C\
+        'startup::' \
+        'shutdown::'
+}
+
+# add the following to ~/.zshrc
+# autoload -U compinit  
+# compinit
