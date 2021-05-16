@@ -32,6 +32,8 @@
 # 所以稍微改变本代码逻辑，功能跟原先基本一致，但可以选择v2ray或shadowsocks，并增加代码补全，                #
 # 与原先不同的是选择v2ray后会检查并关闭shadowsocks，选择shadowsocks之后会检查并关闭v2ray。               #
 # 由于直接使用v2ray-core，没有V2rayU启动的延迟，setautoproxyurl也不再需要等待其他代理打开后再接管全局了。   #
+# 2021-05-16 Update:
+# Modify the code logic, v2ray service needs server serial now, fucow and cli come outside.
 #################################################################################################
 
 kill_processes(){
@@ -46,6 +48,16 @@ if [[ "$1" == "-v2ray" ]]
 then
     if [[ "$2" == "startup" ]]
     then
+        # set server serial
+        if [[ "$3" == "3" ]] || [[ "$3" == "4" ]] || [[ "$3" == "5" ]]
+        then
+            file=~/v2ray-macos-arm64-v8a/config.json
+            sed -i -e '49s/c7s.*.jamjams.net/c7s'$3'.jamjams.net/' $file
+        else
+            echo "invalid v2ray server serial: "$3""
+            exit
+        fi
+        
         # stop the other
         kill_processes Shadowsocks
     
@@ -90,24 +102,9 @@ then
         networksetup -setsocksfirewallproxystate Wi-Fi off
 
         echo "shutdown done"
-    elif [[ "$2" == "fucow" ]]
-    then
-        kill_processes MEOW
-        networksetup -setautoproxystate Wi-Fi off
-
-        echo "autoproxy off"
-    elif [[ "$2" == "cli" ]]
-    then
-        export all_proxy=socks5://127.0.0.1:1081
-        export http_proxy=http://127.0.0.1:8001
-        export https_proxy=http://127.0.0.1:8001
-
-        echo "cliproxy on"
-
-        return
     else
         echo "unknown option: "$2""
-        echo "    usage: ~/MEOW.sh [-v2ray <command>] [-shadowsocks <command>] [-help]"
+        echo "    usage: ~/MEOW.sh [-v2ray <command>] [-shadowsocks <command>] [-help] [-cow] [-cli]"
     fi
 
 elif [[ "$1" == "-shadowsocks" ]]
@@ -158,38 +155,46 @@ then
         networksetup -setsocksfirewallproxystate Wi-Fi off
 
         echo "shutdown done"
-    elif [[ "$2" == "fucow" ]]
-    then
-        kill_processes MEOW
-        networksetup -setautoproxystate Wi-Fi off
-
-        echo "autoproxy off"
-    elif [[ "$2" == "cli" ]]
-    then
-        export all_proxy=socks5://127.0.0.1:1081
-        export http_proxy=http://127.0.0.1:8001
-        export https_proxy=http://127.0.0.1:8001
-
-        echo "cliproxy on"
-
-        return
     else
         echo "unknown option: "$2""
-        echo "    usage: ~/MEOW.sh [-v2ray <command>] [-shadowsocks <command>] [-help]"
+        echo "    usage: ~/MEOW.sh [-v2ray <command>] [-shadowsocks <command>] [-help] [-cow] [-cli]"
     fi
 
 elif [[ "$1" == "-help" ]]
 then
-    echo "usage: ~/MEOW.sh [-v2ray <command>] [-shadowsocks <command>] [-help]"
-    echo "commands after arg1:"
-    echo "    startup     start MEOW, start service, proxy  on (stop the other)"
-    echo "    shutdown    stop  MEOW, stop  service, proxy off"
-    echo "    fucow       stop  MEOW, proxy automatic configuration off"
-    echo "    cli         set cli proxy to protocol://localhost:port"
+    echo "usage: ~/MEOW.sh [-shadowsocks <command>] [-v2ray <command>] [-help]"
+    echo "commands after -shadowsocks:"
+    echo "    startup     start MEOW, proxy  on, start shadowsocks, kill v2ray"
+    echo "    shutdown    stop  MEOW, proxy off, stop  shadowsocks"
+    echo "commands after -v2ray:"
+    echo "    startup <server serial>"
+    echo "                start MEOW, proxy  on, start v2ray according to server serial, kill shadowsocks"
+    echo "    shutdown    stop  MEOW, proxy off, stop  v2ray"
+    echo "-help, -fucow, -cli:"
+    echo "    -help       do nothing except call for help on MEOW.sh"
+    echo "    -cow        stop  MEOW, proxy automatic configuration off"
+    echo "    -cli        set cli proxy to protocol://localhost:port"
+
+elif [[ "$1" == "-cow" ]]
+then
+    kill_processes MEOW
+    networksetup -setautoproxystate Wi-Fi off
+
+    echo "autoproxy off"
+
+elif [[ "$1" == "-cli" ]]
+then
+    export all_proxy=socks5://127.0.0.1:1081
+    export http_proxy=http://127.0.0.1:8001
+    export https_proxy=http://127.0.0.1:8001
+
+    echo "cliproxy on"
+
+    return
 
 else
     echo "unknown option: "$1""
-    echo "    usage: ~/MEOW.sh [-v2ray <command>] [-shadowsocks <command>] [-help]"
+    echo "    usage: ~/MEOW.sh [-v2ray <command>] [-shadowsocks <command>] [-help] [-cow] [-cli]"
 fi
 
 exit
